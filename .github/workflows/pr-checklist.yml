@@ -2,10 +2,7 @@ name: Add editorial checklist upon review
 
 on:
   pull_request:
-    types:
-      - ready_for_review
-      - review_requested
-      - opened
+    branches: [ master, main ]
 
 jobs:
   add_template:
