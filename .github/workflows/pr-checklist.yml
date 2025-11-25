@@ -36,16 +36,20 @@ jobs:
         if: ${{ steps.parse_checklist.outputs.CHECKLIST != '' }}
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const checklist = process.env.CHECKLIST;
             const template = `### Review Checklist\n\n${checklist}\n\nPlease refer to the complete [editor's checklist](https://github.com/elixir-europe/rdmkit/edit/master/pages/contribute/editors_checklist.md) for details.`;
-            const prNumber = context.payload.pull_request.number;
-            const owner = context.payload.pull_request.head.repo.owner.login; // Get code owner
-            const repo = context.payload.pull_request.head.repo.name;
+            
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: template
+              });
+            } catch (error) {
+              console.error('Error creating comment:', error);
+              throw error;
+            }
 
-            await github.rest.pulls.createReviewComment({
-              owner: owner,
-              repo: repo,
-              pull_number: prNumber,
-              body: template,
-            })
