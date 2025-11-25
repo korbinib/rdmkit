@@ -30,10 +30,7 @@ jobs:
         run: |
           # Read the checklist file from the repository
           CHECKLIST=$(sed -E '/^---$/,/^---$/d; s/^[0-9]+\.\s*-?\s*/- [ ] /' pages/contribute/editors_checklist.md)
-          CHECKLIST="${CHECKLIST//'%'/'%25'}"
-          CHECKLIST="${CHECKLIST//$'\n'/'%0A'}"
-          CHECKLIST="${CHECKLIST//$'\r'/'%0D'}"
-          echo "$CHECKLIST" >> $GITHUB_OUTPUT
+          echo "$checklist=${CHECKLIST}" >> $GITHUB_OUTPUT
 
       - name: Add Review Comment
         if: ${{ steps.parse_checklist.outputs.CHECKLIST != '' }}
