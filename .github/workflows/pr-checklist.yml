@@ -1,0 +1,51 @@
+name: Add editorial checklist upon review
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  add_template:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check Modified Files
+        id: check_files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the changed files in the pull request
+          CHANGED_FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only)
+          if echo "$CHANGED_FILES" | grep -qE '^pages/'; then
+            echo "is_pages_changed=TRUE" >> $GITHUB_OUTPUT
+          else
+            echo "is_pages_changed=FALSE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Parse Checklist
+        id: parse_checklist
+        if: ${{ steps.check_files.outputs.is_pages_changed == 'TRUE' }}
+        run: |
+          # Read the checklist file from the repository
+          CHECKLIST=$(sed -E 's/^[0-9]+\.\s+-?/- [ ] /' pages/contribute/editors_checklist.md)
+          echo "CHECKLIST=$CHECKLIST" >> $GITHUB_OUTPUT
+
+      - name: Add Review Comment
+        if: ${{ steps.parse_checklist.outputs.CHECKLIST != '' }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const checklist = process.env.CHECKLIST;
+            const template = `### Review Checklist\n\n${checklist}\n\nPlease refer to the complete [editor's checklist](https://github.com/elixir-europe/rdmkit/edit/master/pages/contribute/editors_checklist.md) for details.`;
+            const prNumber = context.payload.pull_request.number;
+            const owner = context.payload.pull_request.head.repo.owner.login; // Get code owner
+            const repo = context.payload.pull_request.head.repo.name;
+
+            await github.rest.pulls.createReviewComment({
+              owner: owner,
+              repo: repo,
+              pull_number: prNumber,
+              body: template,
+            })
