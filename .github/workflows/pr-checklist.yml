@@ -29,8 +29,8 @@ jobs:
         if: ${{ steps.check_files.outputs.is_pages_changed == 'TRUE' }}
         run: |
           # Read the checklist file from the repository
-          CHECKLIST=$(sed -E '/^---$/,/^---$/d; s/^[0-9]+\.\s*-?\s*/- [ ] /' pages/contribute/editors_checklist.md)
-          echo "$CHECKLIST" >> $GITHUB_OUTPUT
+           sed -E '/^---$/,/^---$/d; s/^[0-9]+\.\s*-?\s*/- [ ] /' pages/contribute/editors_checklist.md | base64 -w0 > /tmp/checklist.b64
+           echo "checklist_b64=$(cat /tmp/checklist.b64)" >> $GITHUB_OUTPUT
 
       - name: Add Review Comment
         if: ${{ steps.parse_checklist.outputs.CHECKLIST != '' }}
@@ -38,9 +38,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const checklist = process.env.CHECKLIST;
+            const checklist = Buffer.from(process.env.CHECKLIST_B64, 'base64').toString('utf8');
             const template = `### Editors checklist\n\n${checklist}\n\nPlease refer to the complete [editor's checklist](https://rdmkit.elixir-europe.org/editors_checklist) for details.`;
-            
+        
             try {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -52,3 +52,6 @@ jobs:
               console.error('Error creating comment:', error);
               throw error;
             }
+         
+            env:
+              CHECKLIST_B64: ${{ steps.parse_checklist.outputs.checklist_b64 }}  
