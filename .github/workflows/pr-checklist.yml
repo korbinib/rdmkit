@@ -33,7 +33,7 @@ jobs:
            echo "checklist_b64=$(cat /tmp/checklist.b64)" >> $GITHUB_OUTPUT
 
       - name: Add Review Comment
-        if: ${{ steps.parse_checklist.outputs.CHECKLIST != '' }}
+        if: ${{ steps.parse_checklist.outputs.checklist_b64 != '' }}
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
