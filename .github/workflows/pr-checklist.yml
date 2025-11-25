@@ -1,8 +1,8 @@
-name: Add editorial checklist upon review
+name: Add editorial checklist upon PR
 
 on:
-  pull_request_review:
-    types: [submitted]
+  pull_request:
+    branches: [ master, main ]
 
 jobs:
   add_template:
@@ -28,40 +28,27 @@ jobs:
         id: parse_checklist
         if: ${{ steps.check_files.outputs.is_pages_changed == 'TRUE' }}
         run: |
-          # Debugging: First, check if the file exists and is readable
-          ls -l pages/contribute/editors_checklist.md
-          
-          # Read the checklist file with more robust sed processing
-          CHECKLIST=$(sed -E '/^[0-9]+\./!d; s/^[0-9]+\.\s*-?\s*/- [ ] /' pages/contribute/editors_checklist.md)
-          
-          # Ensure the checklist is not empty
-          if [ -z "$CHECKLIST" ]; then
-            echo "No valid checklist items found"
-            exit 1
-          fi
-          
-          # Escape special characters for GitHub output
-          CHECKLIST="${CHECKLIST//'%'/'%25'}"
-          CHECKLIST="${CHECKLIST//$'\n'/'%0A'}"
-          CHECKLIST="${CHECKLIST//$'\r'/'%0D'}"
-          
-          echo "CHECKLIST=$CHECKLIST" >> $GITHUB_OUTPUT
-
+          # Read the checklist file from the repository
+          CHECKLIST=$(sed -E '/^---$/,/^---$/d; s/^[0-9]+\.\s*-?\s*/- [ ] /' pages/contribute/editors_checklist.md)
+          echo "$CHECKLIST" >> $GITHUB_OUTPUT
 
       - name: Add Review Comment
         if: ${{ steps.parse_checklist.outputs.CHECKLIST != '' }}
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const checklist = process.env.CHECKLIST;
-            const template = `### Review Checklist\n\n${checklist}\n\nPlease refer to the complete [editor's checklist](https://github.com/elixir-europe/rdmkit/edit/master/pages/contribute/editors_checklist.md) for details.`;
-            const prNumber = context.payload.pull_request.number;
-            const owner = context.payload.pull_request.head.repo.owner.login; // Get code owner
-            const repo = context.payload.pull_request.head.repo.name;
-
-            await github.rest.pulls.createReviewComment({
-              owner: owner,
-              repo: repo,
-              pull_number: prNumber,
-              body: template,
-            })
+            const template = `### Editors checklist\n\n${checklist}\n\nPlease refer to the complete [editor's checklist](https://rdmkit.elixir-europe.org/editors_checklist) for details.`;
+            
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: template
+              });
+            } catch (error) {
+              console.error('Error creating comment:', error);
+              throw error;
+            }
