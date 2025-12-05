@@ -67,7 +67,6 @@ jobs:
               --exclude-path all_training_resources.html 
               --base="${{ github.workspace }}"
               --no-progress
-              --allow-file-links
             # Don't fail action on broken links
             fail: false
             lycheeVersion: v0.21.0
