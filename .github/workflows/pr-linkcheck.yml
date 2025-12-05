@@ -7,8 +7,8 @@ on:
 
 jobs:
   linkChecker:
-    #if: |
-    #  github.repository_owner == 'elixir-europe'
+    if: |
+      github.repository_owner == 'elixir-europe'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -60,13 +60,20 @@ jobs:
             args: >
               --fallback-extensions html 
               --exclude '^https://github\.com' 
-              --root-dir "${{ github.workspace }}/_site" 
-              ${{ steps.changed-files.outputs.all_changed_files }}
+              --root-dir "${{ github.workspace }}" 
+              ${{ steps.changed-files.outputs.all_changed_files }} 
+              _site/ 
               --exclude-path all_tools_and_resources.html 
               --exclude-path all_training_resources.html 
+              --base="${{ github.workspace }}"
+              --no-progress
+              --allow-file-links
             # Don't fail action on broken links
             fail: false
             lycheeVersion: v0.21.0
+        env:
+          # This helps lychee resolve local file links correctly
+          LYCHEE_BASE_DIR: ${{ github.workspace }}
             
       - name: Add page URL
         if: steps.lychee.outputs.exit_code != 0
