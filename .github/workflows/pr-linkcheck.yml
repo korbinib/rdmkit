@@ -60,7 +60,7 @@ jobs:
             args: >
               --fallback-extensions html 
               --exclude '^https://github\.com' 
-              --root-dir "${{ github.workspace }}" 
+              --root-dir "${{ github.workspace }}_site/" 
               ${{ steps.changed-files.outputs.all_changed_files }} 
               _site/ 
               --exclude-path all_tools_and_resources.html 
