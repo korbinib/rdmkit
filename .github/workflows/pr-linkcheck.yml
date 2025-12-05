@@ -7,8 +7,8 @@ on:
 
 jobs:
   linkChecker:
-    if: |
-      github.repository_owner == 'elixir-europe'
+  #  if: |
+  #    github.repository_owner == 'elixir-europe'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
