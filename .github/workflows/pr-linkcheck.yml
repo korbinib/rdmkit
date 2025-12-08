@@ -68,9 +68,6 @@ jobs:
             # Don't fail action on broken links
             fail: false
             lycheeVersion: v0.21.0
-        env:
-          # This helps lychee resolve local file links correctly
-          LYCHEE_BASE_DIR: ${{ github.workspace }}
             
       - name: Add page URL
         if: steps.lychee.outputs.exit_code != 0
