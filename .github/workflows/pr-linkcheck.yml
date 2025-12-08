@@ -63,6 +63,7 @@ jobs:
               #--root-dir "${{ github.workspace }}_site" 
               --exclude-path all_tools_and_resources.html
               --exclude-path all_training_resources.html
+              _site
             # Don't fail action on broken links
             fail: false
             lycheeVersion: v0.21.0
