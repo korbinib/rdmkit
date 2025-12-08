@@ -56,15 +56,12 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: lycheeverse/lychee-action@v2.1.0
         with:
-            # Check only changed files
             args: >
               --fallback-extensions html 
-              --exclude '^https://github\.com' 
+              --exclude '^https://github\.com'
               --root-dir "${{ github.workspace }}/_site" _site/
-              --exclude-path all_tools_and_resources.html 
-              --exclude-path all_training_resources.html 
-              --base="${{ github.workspace }}"
-              --no-progress
+              --exclude-path all_tools_and_resources.html
+              --exclude-path all_training_resources.html
             # Don't fail action on broken links
             fail: false
             lycheeVersion: v0.21.0
