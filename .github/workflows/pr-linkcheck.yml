@@ -23,7 +23,6 @@ jobs:
         uses: tj-actions/changed-files@v41
         with:
           files: |
-            _site/**
             pages/**
             *.md
             *.html
@@ -51,16 +50,33 @@ jobs:
             JEKYLL_BUILD_BRANCH: ${{ github.ref_name }}
             JEKYLL_ENV: production
             JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: Map to built HTML files
+        id: mapped-files
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+            # Map changed source files to built _site files
+            files=""
+            for src in ${{ steps.changed-files.outputs.all_changed_files }}; do
+              # Remove 'pages/' prefix and file extension
+              fname=$(basename "$src" .md)
+              # Most Jekyll builds output fname/index.html
+              if [ -f "_site/${src%.md}/index.html" ]; then
+                files="$files _site/${src%.md}/index.html"
+              elif [ -f "_site/${src%.md}.html" ]; then
+                files="$files _site/${src%.md}.html"
+              fi
+            done
+            echo "files=${files}" >> $GITHUB_OUTPUT
+            
       - name: Link Checker
         id: lychee
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: lycheeverse/lychee-action@v2.1.0
         with:
-            args: --fallback-extensions html --exclude '^https://github\.com' --root-dir "${{ github.workspace }}" ${{ steps.changed-files.outputs.all_changed_files }} --exclude-path all_tools_and_resources.html --exclude-path all_training_resources.html
-            # Don't fail action on broken links
-            fail: false
-            lycheeVersion: v0.21.0
+          args: --fallback-extensions html --exclude '^https://github\.com' --root-dir "${{ github.workspace }}/_site" ${{ steps.mapped-files.outputs.files }} --exclude-path all_tools_and_resources.html --exclude-path all_training_resources.html
+          # Don't fail action on broken links
+          fail: false
+          lycheeVersion: v0.21.0
             
       - name: Add page URL
         if: steps.lychee.outputs.exit_code != 0
