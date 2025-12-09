@@ -27,7 +27,12 @@ jobs:
             pages/**
             *.md
             *.html
-
+            
+      - name: Write changed files to a list
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "${{ steps.changed-files.outputs.all_changed_files }}" | xargs -n1 > changed_files.txt
+            
       - name: Setup Ruby
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: ruby/setup-ruby@v1.204.0
@@ -35,6 +40,7 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
           cache-version: 0
+          
 
       - name: Install dependencies
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -56,7 +62,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: lycheeverse/lychee-action@v2.1.0
         with:
-            args: --no-progress --fallback-extensions html --exclude '^https://github\.com' --root-dir "${{ github.workspace }}/_site" --input "${{ steps.changed-files.outputs.all_changed_files }}" --exclude-path all_tools_and_resources.html --exclude-path all_training_resources.html
+            args: --no-progress --fallback-extensions html --exclude '^https://github\.com' --root-dir "${{ github.workspace }}/_site" --input changed_files.txt --exclude-path all_tools_and_resources.html --exclude-path all_training_resources.html
             # Don't fail action on broken links
             fail: false
             lycheeVersion: v0.21.0
