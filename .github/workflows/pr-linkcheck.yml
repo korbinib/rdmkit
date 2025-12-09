@@ -55,19 +55,24 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
             # Map changed source files to built _site files
-            files=""
-            for src in ${{ steps.changed-files.outputs.all_changed_files }}; do
-              # Remove 'pages/' prefix and file extension
-              fname=$(basename "$src" .md)
-              # Most Jekyll builds output fname/index.html
-              if [ -f "_site/${src%.md}/index.html" ]; then
-                files="$files _site/${src%.md}/index.html"
-              elif [ -f "_site/${src%.md}.html" ]; then
-                files="$files _site/${src%.md}.html"
+            files=()
+            # Read the changed files line by line
+            echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | while read -r src; do
+              # Only process markdown files under pages/
+              if [[ "$src" == pages/*.md ]]; then
+                rel="${src#pages/}"
+                stem="${rel%.md}"
+                # First try _site/foo/bar/index.html
+                if [ -f "_site/${stem}/index.html" ]; then
+                  files+=("${stem}/index.html")
+                # Then try _site/foo/bar.html
+                elif [ -f "_site/${stem}.html" ]; then
+                  files+=("${stem}.html")
+                fi
               fi
             done
             echo "files=${files}" >> $GITHUB_OUTPUT
-            echo "MAPPED: ${{ steps.mapped-files.outputs.files }}"
+            echo "MAPPED: ${files}"
             
       - name: Link Checker
         id: lychee
