@@ -67,6 +67,7 @@ jobs:
               fi
             done
             echo "files=${files}" >> $GITHUB_OUTPUT
+            echo "MAPPED: ${{ steps.mapped-files.outputs.files }}"
             
       - name: Link Checker
         id: lychee
